@@ -1,6 +1,6 @@
 ---
 name: torpathy
-description: Strategic decision framework for broad programming and systems questions where the user is unsure how something should be done, is weighing valid approaches, wants to know where a fix belongs, asks who is closer to truth, asks whether something should be solved with process/prompts/guidance or with interfaces/invariants/runtime architecture, or explicitly says `torpathy`. Use this skill proactively for backend, infra, frontend, APIs, databases, deployments, debugging strategy, agent workflows, and architecture tradeoffs when the user wants strong direction rather than a neutral menu. Do not use it for ordinary implementation where the right next step is already obvious.
+description: Strategic decision framework for programming and systems questions where the user is unsure how something should be done, is weighing valid approaches, wants to know where a fix belongs, asks which side of a tradeoff dominates, asks whether something should be solved with process/prompts/guidance or with interfaces/invariants/runtime architecture, or explicitly says `torpathy`. Use proactively when the user wants strong direction rather than a neutral menu. Do not use for ordinary implementation where the right next step is already obvious.
 ---
 
 This skill has two jobs at once:
@@ -26,6 +26,8 @@ Use two lenses at once:
 
 - **Karpathy lens**: behavior follows incentives, defaults, examples, context, feedback loops, operator experience, and protocol pressure. Ask what the system, model, service, or humans are being rewarded or nudged to do.
 - **Torvalds lens**: bad states should be impossible, explicit, or tightly contained. Ask what API, invariant, contract, schema, state machine, ownership boundary, or lifecycle rule should prevent the failure.
+
+For non-LLM systems, the Karpathy lens maps to: operator habits, deployment defaults, configuration drift, monitoring gaps, and the path of least resistance that led to the current state.
 
 For LLM and agent problems, specialize the lenses like this:
 
@@ -73,6 +75,14 @@ Use these rules quickly:
 - **Repeated operator mistake** → prefer better interface, default, or validation over more instructions
 - **Failure crosses ownership boundaries** → clarify the boundary explicitly in code, API, schema, or lifecycle
 
+## When lenses conflict
+
+When the invariant is expensive and the behavioral fix is cheap and sufficient:
+
+- If the failure is irreversible or crosses trust boundaries → Torvalds wins
+- If the failure is cheap, reversible, and the invariant adds more complexity than it removes → Karpathy wins
+- If both are roughly equal cost → default to Torvalds (hard boundary first, softer guidance as defense in depth)
+
 ## Steering constraints
 
 Quietly bias the answer toward these properties:
@@ -110,8 +120,8 @@ Explain the incentive, protocol, feedback-loop, or operator-behavior side.
 ### 3. Torvalds
 Explain the interface, invariant, lifecycle, schema, contract, or containment side.
 
-### 4. Closer to truth
-Do not fake balance if one side is more right.
+### 4. Dominant lens
+Name which lens is more right for this specific problem. Do not fake balance.
 
 ### 5. Best trade-off / what to do now
 Recommend one concrete next step.
@@ -143,6 +153,10 @@ If the skill triggered but the actual problem is simpler than it first looked:
 - keep the verdict short
 - do not force the full structure unless it helps
 
+Minimal output example:
+
+> **Verdict:** Contract problem. Add a unique constraint on (user_id, event_id). Done.
+
 ## Anti-patterns
 
 - Do not turn every coding question into philosophy.
@@ -160,7 +174,7 @@ If the skill triggered but the actual problem is simpler than it first looked:
 
 **Torvalds:** The system still permits the bad state. If duplicate work is unacceptable, make it impossible with idempotency keys, a tighter contract, or clearer lifecycle boundaries.
 
-**Closer to truth:** Karpathy is closer on explanation. Torvalds is closer on fix location.
+**Dominant lens:** Torvalds dominates on fix location. Karpathy explains why it happened but doesn't prevent recurrence.
 
 **Recommendation:** Put the invariant in the code or runtime first, then keep guidance and defaults as defense in depth.
 
