@@ -1,6 +1,6 @@
 ---
 name: torpathy
-description: Strategic decision framework for programming and systems questions where the user is unsure how something should be done, is weighing valid approaches, wants to know where a fix belongs, asks which side of a tradeoff dominates, asks whether something should be solved with process/prompts/guidance or with interfaces/invariants/runtime architecture, or explicitly says `torpathy`. Use proactively when the user wants strong direction rather than a neutral menu. Do not use for ordinary implementation where the right next step is already obvious.
+description: Strategic decision framework for programming and systems questions where the user is unsure how something should be done, is weighing valid approaches, wants to know where a fix belongs, asks which side of a tradeoff dominates, wants the trade-offs of an approach or implementation spelled out, is brainstorming options and wants each one's costs named, asks whether something should be solved with process/prompts/guidance or with interfaces/invariants/runtime architecture, or explicitly says `torpathy`. Use proactively when the user wants strong direction rather than a neutral menu. Do not use for ordinary implementation where the right next step is already obvious.
 ---
 
 This skill has two jobs at once:
@@ -124,7 +124,7 @@ Explain the interface, invariant, lifecycle, schema, contract, or containment si
 Name which lens is more right for this specific problem. Do not fake balance.
 
 ### 5. Best trade-off / what to do now
-Recommend one concrete next step.
+Recommend one concrete next step, then list the trade-offs of that recommendation: what the user gives up, what it locks in, and the case where this choice is wrong. See [Writing the trade-offs](#writing-the-trade-offs).
 
 ### 6. What to test
 Name the repros, evals, or checks that would prove the decision was correct.
@@ -134,6 +134,21 @@ Name the repros, evals, or checks that would prove the decision was correct.
 By default, explicitly name both lenses in the answer.
 
 You may omit the names only if doing so would make the answer clunky and the same reasoning can be expressed more cleanly without losing the contrast.
+
+## Writing the trade-offs
+
+A recommendation without stated costs is a sales pitch, not a decision. Name what the user gives up, the situation where this choice loses, and what gets harder to change later. The point is to let the user override the call with full information.
+
+Good trade-offs share a few traits:
+
+- They name the actual cost. "Adds a migration and a backfill" tells the user something; "introduces some complexity" does not.
+- They use active voice with a real subject. "You pay an extra read on every write" beats "an extra read is incurred."
+- They quantify when a number exists. "One extra round trip" or "doubles write latency" beats "slower."
+- They state the condition under which the recommendation is wrong, so the user can match it against their own situation. Name a threshold where it should be reconsidered when one exists ("revisit past ~10K writes/sec").
+- They name reversibility. Say whether this is a two-way door (cheap to undo) or a one-way door (expensive or permanent), since that changes how much certainty the choice demands.
+- They stay plain. Short, direct sentences a tired engineer can scan in one pass.
+
+Test each line against a skeptical senior engineer: concrete or hand-wavy? If hand-wavy, name the real cost or cut the line.
 
 ## Tone rules
 
@@ -177,5 +192,7 @@ Minimal output example:
 **Dominant lens:** Torvalds dominates on fix location. Karpathy explains why it happened but doesn't prevent recurrence.
 
 **Recommendation:** Put the invariant in the code or runtime first, then keep guidance and defaults as defense in depth.
+
+**Trade-offs:** The idempotency key needs storage and a lookup on every write, so each request costs one extra read. It also forces callers to send a stable key, which means changing the client contract. If duplicate work were cheap to undo, this would be over-engineering; it earns its keep only because the failure is expensive.
 
 **What to test:** Reproduce the failure under retries, partial failure, and a second model/operator/environment. Confirm the bad path is structurally blocked, not merely less likely.
